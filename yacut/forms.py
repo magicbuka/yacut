@@ -11,13 +11,16 @@ from .models import URLMap
 
 REQUIRED_FIELD = 'Обязательное поле'
 INVALID_URL = 'Некорректный URL'
-ALLOWED_SYMBOLS = 'Допустимы только цифры и латинские буквы {symbols}'
+ALLOWED_SYMBOLS = f'Допустимы только цифры и латинские буквы {SYMBOLS}'
 NAME_USED = 'Имя {name} уже занято!'
+ENTER_URL = 'Введите ссылку'
+ENTER_SHORT_URL = 'Ваш вариант короткой ссылки'
+CREATE = 'Создать'
 
 
 class URLMapForm(FlaskForm):
     original_link = URLField(
-        'Введите ссылку',
+        ENTER_URL,
         validators=[
             DataRequired(message=REQUIRED_FIELD),
             Length(max=MAX_URL_LENGTH),
@@ -25,18 +28,18 @@ class URLMapForm(FlaskForm):
         ]
     )
     custom_id = StringField(
-        'Ваш вариант короткой ссылки',
+        ENTER_SHORT_URL,
         validators=[
             Length(max=USER_SHORT_LENGTH),
             Optional(),
             Regexp(
                 PATTERN,
-                message=ALLOWED_SYMBOLS.format(symbols=SYMBOLS)
+                message=ALLOWED_SYMBOLS
             )
         ]
     )
-    submit = SubmitField('Создать')
+    submit = SubmitField(CREATE)
 
     def validate_custom_id(self, field):
-        if field.data and URLMap.get_original(short=field.data):
+        if field.data and URLMap.get_urlmap_item(custom_id=field.data):
             raise ValidationError(NAME_USED.format(name=field.data))

@@ -3,6 +3,7 @@ from flask import flash, redirect, render_template, url_for
 from settings import REDIRECT_VIEW
 
 from . import app
+from .error_handlers import ExistenceError, ValidatingError
 from .forms import URLMapForm
 from .models import URLMap
 
@@ -18,19 +19,21 @@ def index_view():
             form=form,
             short_url=url_for(
                 REDIRECT_VIEW,
-                short=URLMap.create_short_url(
+                short=URLMap.create_urlmap(
                     original=form.original_link.data,
-                    short=form.custom_id.data,
+                    custom_id=form.custom_id.data,
                     validate=True
                 ).short,
                 _external=True
             )
         )
-    except Exception as error:
+    except ExistenceError as error:
         flash(error)
-        return render_template('index.html', form=form)
+    except ValidatingError as error:
+        flash(error)
+    return render_template('index.html', form=form)
 
 
 @app.route('/<string:short>')
 def redirect_view(short):
-    return redirect(URLMap.get_original_or_404(short))
+    return redirect(URLMap.get_urlmap_or_404(short))

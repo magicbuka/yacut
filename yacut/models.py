@@ -10,13 +10,15 @@ from settings import (
 )
 from yacut import db
 
+from .error_handlers import CreatingError, ExistenceError, ValidatingError
+
 WRONG_SHORT_NAME = 'Указано недопустимое имя для короткой ссылки'
 WRONG_LENGTH = (
     'Размер ссылки {get_length} '
-    'больше допустимого {max_length}'
+    f'больше допустимого {MAX_URL_LENGTH}'
 )
 NAME_USED = 'Имя "{name}" уже занято.'
-SHORT_GENERATOR_ERROR = 'Не удалось сгенерировать короткую ссылку'
+SHORT_CREATION_ERROR = 'Не удалось сгенерировать короткую ссылку'
 
 
 class URLMap(db.Model):
@@ -34,39 +36,38 @@ class URLMap(db.Model):
         )
 
     @staticmethod
-    def create_short_url(original, short, validate=False):
-        if not validate:
+    def create_urlmap(original, custom_id, validate=False):
+        if validate:
             if len(original) > MAX_URL_LENGTH:
-                raise ValueError(WRONG_LENGTH.format(
-                    get_length=len(original),
-                    max_length=MAX_URL_LENGTH
+                raise ValidatingError(WRONG_LENGTH.format(
+                    get_length=len(original)
                 ))
-            if short:
-                if len(short) > USER_SHORT_LENGTH:
-                    raise ValueError(WRONG_SHORT_NAME)
-                if not match(PATTERN, short):
-                    raise ValueError(WRONG_SHORT_NAME)
-                if URLMap.get_original(short=short):
-                    raise ValueError(NAME_USED.format(name=short))
-        if not short:
-            short = URLMap.get_unique_short_id()
-        entry = URLMap(original=original, short=short)
+            if custom_id:
+                if len(custom_id) > USER_SHORT_LENGTH:
+                    raise ValidatingError(WRONG_SHORT_NAME)
+                if not match(PATTERN, custom_id):
+                    raise ValidatingError(WRONG_SHORT_NAME)
+                if URLMap.get_urlmap_item(custom_id):
+                    raise ExistenceError(NAME_USED.format(name=custom_id))
+        if not custom_id:
+            custom_id = URLMap.create_unique_custom_id()
+        entry = URLMap(original=original, short=custom_id)
         db.session.add(entry)
         db.session.commit()
         return entry
 
     @staticmethod
-    def get_unique_short_id():
+    def create_unique_custom_id():
         for _ in range(GENERATE_SHORT_RETRIES):
-            short = ''.join(sample(SYMBOLS, SHORT_LENGTH))
-            if not URLMap.get_original(short=short):
-                return short
-        raise ValueError(SHORT_GENERATOR_ERROR)
+            custom_id = ''.join(sample(SYMBOLS, SHORT_LENGTH))
+            if not URLMap.get_urlmap_item(custom_id):
+                return custom_id
+        raise CreatingError(SHORT_CREATION_ERROR)
 
     @staticmethod
-    def get_original(short):
-        return URLMap.query.filter_by(short=short).first()
+    def get_urlmap_item(custom_id):
+        return URLMap.query.filter_by(short=custom_id).first()
 
     @staticmethod
-    def get_original_or_404(short):
-        return URLMap.query.filter_by(short=short).first_or_404().original
+    def get_urlmap_or_404(custom_id):
+        return URLMap.query.filter_by(short=custom_id).first_or_404().original
