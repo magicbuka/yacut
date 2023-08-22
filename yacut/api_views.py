@@ -15,7 +15,7 @@ NAME_USED = 'Имя "{name}" уже занято.'
 
 @app.route('/api/id/<string:short_id>/')
 def get_url(short_id):
-    url_map = URLMap.get_urlmap_item(short_id)
+    url_map = URLMap.get(short_id)
     if not url_map:
         raise InvalidAPIUsage(
             SHORT_ID_NOT_FOUND,
@@ -31,15 +31,15 @@ def create_id():
         raise InvalidAPIUsage(MISSING_REQUEST_BODY)
     if 'url' not in data:
         raise InvalidAPIUsage(URL_IS_REQUIRED_FIELD)
-    custom_id = data.get('custom_id')
+    short = data.get('custom_id')
     try:
-        url_map = URLMap.create_urlmap(
+        url_map = URLMap.create(
             data.get('url'),
-            custom_id,
+            short,
             validate=True
         )
     except ExistenceError:
-        raise InvalidAPIUsage(NAME_USED.format(name=custom_id))
+        raise InvalidAPIUsage(NAME_USED.format(name=short))
     except ValidatingError as error:
         raise InvalidAPIUsage(error.message)
     return jsonify(url_map.to_dict()), HTTPStatus.CREATED

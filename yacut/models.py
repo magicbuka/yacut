@@ -14,7 +14,7 @@ from .error_handlers import CreatingError, ExistenceError, ValidatingError
 
 WRONG_SHORT_NAME = 'Указано недопустимое имя для короткой ссылки'
 WRONG_LENGTH = (
-    'Размер ссылки {get_length} '
+    'Размер ссылки {length} '
     f'больше допустимого {MAX_URL_LENGTH}'
 )
 NAME_USED = 'Имя "{name}" уже занято.'
@@ -31,43 +31,43 @@ class URLMap(db.Model):
         return dict(
             url=self.original,
             short_link=url_for(
-                REDIRECT_VIEW, short=self.short, _external=True
+                REDIRECT_VIEW, custom_id=self.short, _external=True
             ),
         )
 
     @staticmethod
-    def create_urlmap(original, custom_id, validate=False):
+    def create(original, short, validate=False):
         if validate:
             if len(original) > MAX_URL_LENGTH:
                 raise ValidatingError(WRONG_LENGTH.format(
-                    get_length=len(original)
+                    length=len(original)
                 ))
-            if custom_id:
-                if len(custom_id) > USER_SHORT_LENGTH:
+            if short:
+                if len(short) > USER_SHORT_LENGTH:
                     raise ValidatingError(WRONG_SHORT_NAME)
-                if not match(PATTERN, custom_id):
+                if not match(PATTERN, short):
                     raise ValidatingError(WRONG_SHORT_NAME)
-                if URLMap.get_urlmap_item(custom_id):
-                    raise ExistenceError(NAME_USED.format(name=custom_id))
-        if not custom_id:
-            custom_id = URLMap.create_unique_custom_id()
-        entry = URLMap(original=original, short=custom_id)
+                if URLMap.get(short):
+                    raise ExistenceError(NAME_USED.format(name=short))
+        if not short:
+            short = URLMap.create_unique_short_id()
+        entry = URLMap(original=original, short=short)
         db.session.add(entry)
         db.session.commit()
         return entry
 
     @staticmethod
-    def create_unique_custom_id():
+    def create_unique_short_id():
         for _ in range(GENERATE_SHORT_RETRIES):
-            custom_id = ''.join(sample(SYMBOLS, SHORT_LENGTH))
-            if not URLMap.get_urlmap_item(custom_id):
-                return custom_id
+            short_id = ''.join(sample(SYMBOLS, SHORT_LENGTH))
+            if not URLMap.get(short_id):
+                return short_id
         raise CreatingError(SHORT_CREATION_ERROR)
 
     @staticmethod
-    def get_urlmap_item(custom_id):
-        return URLMap.query.filter_by(short=custom_id).first()
+    def get(short):
+        return URLMap.query.filter_by(short=short).first()
 
     @staticmethod
-    def get_urlmap_or_404(custom_id):
-        return URLMap.query.filter_by(short=custom_id).first_or_404().original
+    def get_first_or_404(short):
+        return URLMap.query.filter_by(short=short).first_or_404()

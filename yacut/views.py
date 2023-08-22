@@ -19,10 +19,10 @@ def index_view():
             form=form,
             short_url=url_for(
                 REDIRECT_VIEW,
-                short=URLMap.create_urlmap(
-                    original=form.original_link.data,
-                    custom_id=form.custom_id.data,
-                    validate=True
+                custom_id=URLMap.create(
+                    form.original_link.data,
+                    form.custom_id.data,
+                    True
                 ).short,
                 _external=True
             )
@@ -34,6 +34,6 @@ def index_view():
     return render_template('index.html', form=form)
 
 
-@app.route('/<string:short>')
-def redirect_view(short):
-    return redirect(URLMap.get_urlmap_or_404(short))
+@app.route('/<string:custom_id>')
+def redirect_view(custom_id):
+    return redirect(URLMap.get_first_or_404(custom_id).original)

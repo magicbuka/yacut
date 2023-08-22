@@ -41,5 +41,5 @@ class URLMapForm(FlaskForm):
     submit = SubmitField(CREATE)
 
     def validate_custom_id(self, field):
-        if field.data and URLMap.get_urlmap_item(custom_id=field.data):
+        if field.data and URLMap.get(short=field.data):
             raise ValidationError(NAME_USED.format(name=field.data))
