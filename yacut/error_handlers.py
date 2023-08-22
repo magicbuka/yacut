@@ -28,7 +28,7 @@ class ExistenceError(Exception):
 
 class CreatingError(Exception):
     pass
-    
+
 
 @app.errorhandler(404)
 def page_not_found(error):
