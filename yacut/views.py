@@ -28,12 +28,12 @@ def index_view():
             )
         )
     except ExistenceError as error:
-        flash(error)
+        flash(f'{error}')
     except ValidatingError as error:
-        flash(error)
+        flash(f'{error}')
     return render_template('index.html', form=form)
 
 
 @app.route('/<string:custom_id>')
 def redirect_view(custom_id):
-    return redirect(URLMap.get_first_or_404(custom_id).original)
+    return redirect(URLMap.get_or_404(custom_id).original)

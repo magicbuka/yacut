@@ -5,7 +5,7 @@ from flask import jsonify, render_template
 from . import app, db
 
 
-class BaseError(Exception):
+class InvalidAPIUsage(Exception):
     status_code = HTTPStatus.BAD_REQUEST
 
     def __init__(self, message, status_code=None):
@@ -18,21 +18,17 @@ class BaseError(Exception):
         return dict(message=self.message)
 
 
-class InvalidAPIUsage(BaseError):
+class ValidatingError(Exception):
     pass
 
 
-class ValidatingError(BaseError):
+class ExistenceError(Exception):
     pass
 
 
-class ExistenceError(BaseError):
+class CreatingError(Exception):
     pass
-
-
-class CreatingError(BaseError):
-    status_code = HTTPStatus.INTERNAL_SERVER_ERROR
-
+    
 
 @app.errorhandler(404)
 def page_not_found(error):

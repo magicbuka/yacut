@@ -13,6 +13,7 @@ from yacut import db
 from .error_handlers import CreatingError, ExistenceError, ValidatingError
 
 WRONG_SHORT_NAME = 'Указано недопустимое имя для короткой ссылки'
+WRONG_SHORT = 'Указано недопустимое имя для короткой ссылки'
 WRONG_LENGTH = (
     'Размер ссылки {length} '
     f'больше допустимого {MAX_URL_LENGTH}'
@@ -46,7 +47,7 @@ class URLMap(db.Model):
                 if len(short) > USER_SHORT_LENGTH:
                     raise ValidatingError(WRONG_SHORT_NAME)
                 if not match(PATTERN, short):
-                    raise ValidatingError(WRONG_SHORT_NAME)
+                    raise ValidatingError(WRONG_SHORT)
                 if URLMap.get(short):
                     raise ExistenceError(NAME_USED.format(name=short))
         if not short:
@@ -69,5 +70,5 @@ class URLMap(db.Model):
         return URLMap.query.filter_by(short=short).first()
 
     @staticmethod
-    def get_first_or_404(short):
+    def get_or_404(short):
         return URLMap.query.filter_by(short=short).first_or_404()

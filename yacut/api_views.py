@@ -33,13 +33,18 @@ def create_id():
         raise InvalidAPIUsage(URL_IS_REQUIRED_FIELD)
     short = data.get('custom_id')
     try:
-        url_map = URLMap.create(
+        return jsonify(URLMap.create(
             data.get('url'),
             short,
             validate=True
-        )
-    except ExistenceError:
-        raise InvalidAPIUsage(NAME_USED.format(name=short))
-    except ValidatingError as error:
-        raise InvalidAPIUsage(error.message)
-    return jsonify(url_map.to_dict()), HTTPStatus.CREATED
+        ).to_dict()), HTTPStatus.CREATED
+    #except ExistenceError:
+    #    raise InvalidAPIUsage(NAME_USED.format(name=short))
+    #except ValidatingError as error:
+    #    raise InvalidAPIUsage(error)
+    #return jsonify(url_map.to_dict()), HTTPStatus.CREATED
+    except (
+        ExistenceError,
+        ValidatingError
+    ) as error:
+        raise InvalidAPIUsage(f'{error}')
